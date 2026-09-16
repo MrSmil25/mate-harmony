@@ -57,6 +57,20 @@ export function Onboarding({ onComplete }: { onComplete: (setup: StudentSetup) =
   };
   const suggestedNow = useMemo(() => courses.filter((course) => course.semester === semester), [courses, semester]);
 
+  const todayName = CLASS_DAYS[(new Date().getDay() + 6) % 7] ?? "Monday";
+  const todaySchedule = useMemo(() => {
+    const fromCurriculum = activeCodes.flatMap((code) => {
+      const config = configs[code];
+      const course = courses.find((item) => item.code === code);
+      if (!config || !course || config.day !== todayName) return [];
+      return [{ key: code, title: course.name, start: config.start, end: config.end, room: config.room }];
+    });
+    const fromCustom = customCourses
+      .filter((course) => course.name.trim() && course.day === todayName)
+      .map((course, index) => ({ key: `extra-${index}`, title: course.name.trim(), start: course.start, end: course.end, room: course.room }));
+    return [...fromCurriculum, ...fromCustom].sort((a, b) => a.start.localeCompare(b.start));
+  }, [activeCodes, configs, courses, customCourses, todayName]);
+
   const toggleCompleted = (code: string) =>
     setCompleted((list) => (list.includes(code) ? list.filter((item) => item !== code) : [...list, code]));
 
