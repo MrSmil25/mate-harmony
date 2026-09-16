@@ -89,9 +89,8 @@ function buildCurriculum(program: CatalogProgram, courses: CatalogCourse[]): Pro
   };
 }
 
-const fallbackCurriculum = buildCurriculum(
-  fallbackProgram,
-  baseCurriculum.map((course) => ({
+function toCatalogCourses(courses: typeof baseCurriculum): CatalogCourse[] {
+  return courses.map((course) => ({
     code: course.code,
     name: course.name,
     sks: course.sks,
@@ -101,12 +100,24 @@ const fallbackCurriculum = buildCurriculum(
     semester: course.semester,
     prereq: course.prereq,
     note: course.note ?? null,
-  })),
-);
+  }));
+}
+
+const fallbackCurriculum = buildCurriculum(fallbackProgram, toCatalogCourses(baseCurriculum));
+const fallbackAccountingCurriculum = buildCurriculum(accountingProgram, toCatalogCourses(accountingCurriculum));
+
+/** Bundled programs, always selectable during onboarding. */
+export const offlinePrograms: CatalogProgram[] = [fallbackProgram, accountingProgram];
+
+const offlineCurriculumById = new Map<string, ProgramCurriculum>([
+  [fallbackProgram.id, fallbackCurriculum],
+  [accountingProgram.id, fallbackAccountingCurriculum],
+]);
 
 /** Course metadata seen so far, so saved data keeps names and credits. */
 const courseMeta = new Map<string, { name: string; sks: number }>();
-for (const course of fallbackCurriculum.courses) courseMeta.set(course.code, { name: course.name, sks: course.sks });
+for (const curriculum of offlineCurriculumById.values())
+  for (const course of curriculum.courses) courseMeta.set(course.code, { name: course.name, sks: course.sks });
 
 export function getCourseMeta(code: string) {
   return courseMeta.get(code) ?? { name: code, sks: 0 };
