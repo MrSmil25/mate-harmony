@@ -146,9 +146,9 @@ export function Onboarding({ onComplete }: { onComplete: (setup: StudentSetup) =
             </section>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <section className="academic-card p-6">
-              <StepTitle icon={Sparkles} eyebrow="Step 2" title="Which semester are you in?" subtitle="We use this for your dashboard, academic journey, and curriculum progress." />
+              <StepTitle icon={Sparkles} eyebrow="Step 3" title="Which semester are you in?" subtitle="We use this for your dashboard, academic journey, and curriculum progress." />
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {Array.from({ length: 8 }, (_, index) => index + 1).map((value) => (
                   <button key={value} onClick={() => setSemester(value)} className={`rounded-2xl border p-4 text-left transition-colors ${semester === value ? "border-academic bg-accent" : "border-input bg-surface hover:bg-muted"}`}>
@@ -161,15 +161,20 @@ export function Onboarding({ onComplete }: { onComplete: (setup: StudentSetup) =
             </section>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <section className="space-y-4">
               <div className="academic-card overflow-hidden">
                 <div className="bg-academic p-6 text-academic-foreground">
-                  <p className="text-xs font-semibold opacity-80">{curriculumLoading ? "LOADING CURRICULUM…" : "CURRICULUM LOADED"}</p>
-                  <h2 className="mt-2 text-2xl font-bold">{catalog.program.name} {catalog.program.faculty.includes("Ekonomi") ? "FEB" : ""} {catalog.program.university.includes("Indonesia") ? "UI" : ""} — Curriculum {catalog.program.curriculumYear}</h2>
-                  <p className="mt-1 text-sm opacity-85">{catalog.totalSks} SKS · {semesterGroups.length} semesters · {courses.length} mapped courses</p>
+                  <p className="text-xs font-semibold opacity-80">{curriculumLoading ? "DETECTING CURRICULUM…" : "CURRICULUM DETECTED AUTOMATICALLY"}</p>
+                  <h2 className="mt-2 text-2xl font-bold">{catalog.program.degree === "Sarjana (S1)" ? "Bachelor of " : ""}{catalog.program.name} — {catalog.program.faculty.includes("Ekonomi") ? "FEB" : catalog.program.faculty} {catalog.program.university.includes("Indonesia") ? "UI" : catalog.program.university}</h2>
+                  <p className="mt-1 text-sm opacity-85">Curriculum {catalog.program.curriculumYear} · {catalog.totalSks} SKS required to graduate</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-5">
+                <div className="grid gap-3 p-5 sm:grid-cols-3">
+                  <Stat label="Program" value={`${catalog.program.name} (${catalog.program.degree})`} />
+                  <Stat label="Curriculum year" value={`${catalog.program.curriculumYear}`} />
+                  <Stat label="Graduation requirement" value={`${catalog.totalSks} SKS`} />
+                </div>
+                <div className="grid grid-cols-2 gap-3 px-5 pb-5 sm:grid-cols-5">
                   {catalog.structure.map((item) => (
                     <div key={item.label} className="rounded-xl bg-muted p-3">
                       <p className="text-[10px] font-semibold uppercase text-muted-foreground">{item.label}</p>
