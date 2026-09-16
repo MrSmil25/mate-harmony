@@ -6,13 +6,14 @@ import { activateCurriculum, courseAvailability, sksTotal, usePrograms, useProgr
 import { CLASS_DAYS, SECTIONS, type ActiveCourseConfig, type ClassDay, type CustomCourse, type Section, type StudentSetup } from "@/data/setup";
 
 const steps = [
-  { id: 1, label: "Your profile", hint: "Who you are" },
-  { id: 2, label: "Current semester", hint: "Where you are" },
-  { id: 3, label: "Curriculum", hint: "Your degree map" },
+  { id: 1, label: "Academic identity", hint: "Who you are" },
+  { id: 2, label: "Curriculum", hint: "Your degree map" },
+  { id: 3, label: "Current semester", hint: "Where you are" },
   { id: 4, label: "Completed courses", hint: "What you finished" },
   { id: 5, label: "This semester", hint: "What you take now" },
   { id: 6, label: "Class setup", hint: "Section & schedule" },
   { id: 7, label: "Extra courses", hint: "Outside the curriculum" },
+  { id: 8, label: "Your dashboard", hint: "Everything in one place" },
 ];
 
 const fieldClass = "mt-1.5 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-academic";
@@ -55,6 +56,20 @@ export function Onboarding({ onComplete }: { onComplete: (setup: StudentSetup) =
     percent: Math.min(100, Math.round((completedSks / catalog.totalSks) * 100)),
   };
   const suggestedNow = useMemo(() => courses.filter((course) => course.semester === semester), [courses, semester]);
+
+  const todayName = CLASS_DAYS[(new Date().getDay() + 6) % 7] ?? "Monday";
+  const todaySchedule = useMemo(() => {
+    const fromCurriculum = activeCodes.flatMap((code) => {
+      const config = configs[code];
+      const course = courses.find((item) => item.code === code);
+      if (!config || !course || config.day !== todayName) return [];
+      return [{ key: code, title: course.name, start: config.start, end: config.end, room: config.room }];
+    });
+    const fromCustom = customCourses
+      .filter((course) => course.name.trim() && course.day === todayName)
+      .map((course, index) => ({ key: `extra-${index}`, title: course.name.trim(), start: course.start, end: course.end, room: course.room }));
+    return [...fromCurriculum, ...fromCustom].sort((a, b) => a.start.localeCompare(b.start));
+  }, [activeCodes, configs, courses, customCourses, todayName]);
 
   const toggleCompleted = (code: string) =>
     setCompleted((list) => (list.includes(code) ? list.filter((item) => item !== code) : [...list, code]));
@@ -145,9 +160,9 @@ export function Onboarding({ onComplete }: { onComplete: (setup: StudentSetup) =
             </section>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <section className="academic-card p-6">
-              <StepTitle icon={Sparkles} eyebrow="Step 2" title="Which semester are you in?" subtitle="We use this for your dashboard, academic journey, and curriculum progress." />
+              <StepTitle icon={Sparkles} eyebrow="Step 3" title="Which semester are you in?" subtitle="We use this for your dashboard, academic journey, and curriculum progress." />
               <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {Array.from({ length: 8 }, (_, index) => index + 1).map((value) => (
                   <button key={value} onClick={() => setSemester(value)} className={`rounded-2xl border p-4 text-left transition-colors ${semester === value ? "border-academic bg-accent" : "border-input bg-surface hover:bg-muted"}`}>
@@ -160,15 +175,20 @@ export function Onboarding({ onComplete }: { onComplete: (setup: StudentSetup) =
             </section>
           )}
 
-          {step === 3 && (
+          {step === 2 && (
             <section className="space-y-4">
               <div className="academic-card overflow-hidden">
                 <div className="bg-academic p-6 text-academic-foreground">
-                  <p className="text-xs font-semibold opacity-80">{curriculumLoading ? "LOADING CURRICULUM…" : "CURRICULUM LOADED"}</p>
-                  <h2 className="mt-2 text-2xl font-bold">{catalog.program.name} {catalog.program.faculty.includes("Ekonomi") ? "FEB" : ""} {catalog.program.university.includes("Indonesia") ? "UI" : ""} — Curriculum {catalog.program.curriculumYear}</h2>
-                  <p className="mt-1 text-sm opacity-85">{catalog.totalSks} SKS · {semesterGroups.length} semesters · {courses.length} mapped courses</p>
+                  <p className="text-xs font-semibold opacity-80">{curriculumLoading ? "DETECTING CURRICULUM…" : "CURRICULUM DETECTED AUTOMATICALLY"}</p>
+                  <h2 className="mt-2 text-2xl font-bold">{catalog.program.degree === "Sarjana (S1)" ? "Bachelor of " : ""}{catalog.program.name} — {catalog.program.faculty.includes("Ekonomi") ? "FEB" : catalog.program.faculty} {catalog.program.university.includes("Indonesia") ? "UI" : catalog.program.university}</h2>
+                  <p className="mt-1 text-sm opacity-85">Curriculum {catalog.program.curriculumYear} · {catalog.totalSks} SKS required to graduate</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-5">
+                <div className="grid gap-3 p-5 sm:grid-cols-3">
+                  <Stat label="Program" value={`${catalog.program.name} (${catalog.program.degree})`} />
+                  <Stat label="Curriculum year" value={`${catalog.program.curriculumYear}`} />
+                  <Stat label="Graduation requirement" value={`${catalog.totalSks} SKS`} />
+                </div>
+                <div className="grid grid-cols-2 gap-3 px-5 pb-5 sm:grid-cols-5">
                   {catalog.structure.map((item) => (
                     <div key={item.label} className="rounded-xl bg-muted p-3">
                       <p className="text-[10px] font-semibold uppercase text-muted-foreground">{item.label}</p>
@@ -331,6 +351,64 @@ export function Onboarding({ onComplete }: { onComplete: (setup: StudentSetup) =
                   </div>
                 </div>
               ))}
+            </section>
+          )}
+
+          {step === 8 && (
+            <section className="space-y-4">
+              <div className="academic-card overflow-hidden">
+                <div className="bg-academic p-6 text-academic-foreground">
+                  <p className="text-xs font-semibold opacity-80">YOUR ACADEMIC OPERATING SYSTEM IS READY</p>
+                  <h2 className="mt-2 text-2xl font-bold">{name.trim() || "Student"} · Semester {semester}</h2>
+                  <p className="mt-1 text-sm opacity-85">{catalog.program.name} · {faculty} · {university} · Angkatan {entryYear}</p>
+                </div>
+                <div className="grid gap-3 p-5 sm:grid-cols-4">
+                  <Stat label="Current semester" value={`Semester ${semester}`} />
+                  <Stat label="Credits completed" value={`${progress.completedSks} / ${catalog.totalSks} SKS`} />
+                  <Stat label="Remaining" value={`${progress.remainingSks} SKS`} />
+                  <Stat label="Degree progress" value={`${progress.percent}%`} />
+                </div>
+                <div className="px-5 pb-5"><Progress value={progress.percent} className="h-2" /></div>
+              </div>
+
+              <div className="academic-card p-5">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><ClipboardList className="size-4 text-academic" />Courses this semester · {sksTotal(activeCodes) + customCourses.reduce((total, course) => total + (Number(course.sks) || 0), 0)} SKS</p>
+                <div className="mt-3 space-y-2">
+                  {activeCodes.map((code) => {
+                    const course = courseByCode.get(code);
+                    const config = configs[code];
+                    if (!course || !config) return null;
+                    return (
+                      <div key={code} className="rounded-xl bg-muted p-3.5">
+                        <p className="text-sm font-bold">{course.name}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">Class {config.section} · {course.sks} SKS · {config.lecturer || "Lecturer TBA"} · {config.day} {config.start}–{config.end} · {config.room || "Room TBA"}</p>
+                      </div>
+                    );
+                  })}
+                  {customCourses.filter((course) => course.name.trim()).map((course, index) => (
+                    <div key={`extra-${index}`} className="rounded-xl bg-muted p-3.5">
+                      <p className="text-sm font-bold">{course.name} <span className="text-[10px] font-semibold text-academic">EXTRA</span></p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">{course.faculty || "Outside curriculum"} · {course.sks} SKS · {course.day} {course.start}–{course.end} · {course.countsTowardGraduation ? "Counts toward graduation" : "Not counted"}</p>
+                    </div>
+                  ))}
+                  {!activeCodes.length && !customCourses.length && <p className="text-sm text-muted-foreground">No active courses picked yet.</p>}
+                </div>
+              </div>
+
+              <div className="academic-card p-5">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><Clock3 className="size-4 text-academic" />Today · {todayName}</p>
+                <div className="mt-3 space-y-2">
+                  {todaySchedule.length ? todaySchedule.map((item) => (
+                    <div key={item.key} className="flex items-center gap-3 rounded-xl bg-muted p-3.5">
+                      <span className="font-display text-sm font-bold text-academic">{item.start}</span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold">{item.title}</span>
+                        <span className="block text-[11px] text-muted-foreground">{item.start} – {item.end} · {item.room || "Room TBA"}</span>
+                      </span>
+                    </div>
+                  )) : <p className="text-sm text-muted-foreground">Nothing scheduled today — a good day to get ahead.</p>}
+                </div>
+              </div>
             </section>
           )}
         </div>

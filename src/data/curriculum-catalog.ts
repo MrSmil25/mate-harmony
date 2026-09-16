@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyActiveCurriculum, baseCurriculum, baseStructure, type CurriculumCourse, type CurriculumGroup } from "@/data/curriculum";
+import { accountingCurriculum, accountingProgram as accountingProgramInfo } from "@/data/programs-offline";
+
+const accountingProgram: CatalogProgram = { ...accountingProgramInfo };
 
 /**
  * Curriculum master data: programs, their versioned curriculum, course
@@ -89,9 +92,8 @@ function buildCurriculum(program: CatalogProgram, courses: CatalogCourse[]): Pro
   };
 }
 
-const fallbackCurriculum = buildCurriculum(
-  fallbackProgram,
-  baseCurriculum.map((course) => ({
+function toCatalogCourses(courses: typeof baseCurriculum): CatalogCourse[] {
+  return courses.map((course) => ({
     code: course.code,
     name: course.name,
     sks: course.sks,
@@ -101,12 +103,24 @@ const fallbackCurriculum = buildCurriculum(
     semester: course.semester,
     prereq: course.prereq,
     note: course.note ?? null,
-  })),
-);
+  }));
+}
+
+const fallbackCurriculum = buildCurriculum(fallbackProgram, toCatalogCourses(baseCurriculum));
+const fallbackAccountingCurriculum = buildCurriculum(accountingProgram, toCatalogCourses(accountingCurriculum));
+
+/** Bundled programs, always selectable during onboarding. */
+export const offlinePrograms: CatalogProgram[] = [fallbackProgram, accountingProgram];
+
+const offlineCurriculumById = new Map<string, ProgramCurriculum>([
+  [fallbackProgram.id, fallbackCurriculum],
+  [accountingProgram.id, fallbackAccountingCurriculum],
+]);
 
 /** Course metadata seen so far, so saved data keeps names and credits. */
 const courseMeta = new Map<string, { name: string; sks: number }>();
-for (const course of fallbackCurriculum.courses) courseMeta.set(course.code, { name: course.name, sks: course.sks });
+for (const curriculum of offlineCurriculumById.values())
+  for (const course of curriculum.courses) courseMeta.set(course.code, { name: course.name, sks: course.sks });
 
 export function getCourseMeta(code: string) {
   return courseMeta.get(code) ?? { name: code, sks: 0 };
@@ -118,7 +132,7 @@ export async function loadPrograms(): Promise<CatalogProgram[]> {
     .select("id, code, name, faculty, university, degree, curriculum_year, total_sks")
     .eq("is_active", true)
     .order("name");
-  if (error || !data?.length) return [fallbackProgram];
+  if (error || !data?.length) return offlinePrograms;
 
   return data.map((row) => ({
     id: row.id,
@@ -133,6 +147,9 @@ export async function loadPrograms(): Promise<CatalogProgram[]> {
 }
 
 export async function loadProgramCurriculum(program: CatalogProgram): Promise<ProgramCurriculum> {
+  const offline = offlineCurriculumById.get(program.id);
+  if (offline) return offline;
+
   const { data, error } = await supabase
     .from("curriculum_courses")
     .select("code, name, sks, course_group, category, track, semester, note, course_prerequisites(prerequisite_code)")
@@ -171,7 +188,7 @@ export function sksTotal(codes: string[]) {
 
 /** Programs available for onboarding. */
 export function usePrograms() {
-  const [programs, setPrograms] = useState<CatalogProgram[]>([fallbackProgram]);
+  const [programs, setPrograms] = useState<CatalogProgram[]>(offlinePrograms);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
