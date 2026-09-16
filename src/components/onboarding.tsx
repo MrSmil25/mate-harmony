@@ -6,13 +6,14 @@ import { activateCurriculum, courseAvailability, sksTotal, usePrograms, useProgr
 import { CLASS_DAYS, SECTIONS, type ActiveCourseConfig, type ClassDay, type CustomCourse, type Section, type StudentSetup } from "@/data/setup";
 
 const steps = [
-  { id: 1, label: "Your profile", hint: "Who you are" },
-  { id: 2, label: "Current semester", hint: "Where you are" },
-  { id: 3, label: "Curriculum", hint: "Your degree map" },
+  { id: 1, label: "Academic identity", hint: "Who you are" },
+  { id: 2, label: "Curriculum", hint: "Your degree map" },
+  { id: 3, label: "Current semester", hint: "Where you are" },
   { id: 4, label: "Completed courses", hint: "What you finished" },
   { id: 5, label: "This semester", hint: "What you take now" },
   { id: 6, label: "Class setup", hint: "Section & schedule" },
   { id: 7, label: "Extra courses", hint: "Outside the curriculum" },
+  { id: 8, label: "Your dashboard", hint: "Everything in one place" },
 ];
 
 const fieldClass = "mt-1.5 w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm outline-none transition-colors focus:border-academic";
