@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { applyActiveCurriculum, baseCurriculum, baseStructure, type CurriculumCourse, type CurriculumGroup } from "@/data/curriculum";
+import { accountingCurriculum, accountingProgram as accountingProgramInfo } from "@/data/programs-offline";
+
+const accountingProgram: CatalogProgram = { ...accountingProgramInfo };
 
 /**
  * Curriculum master data: programs, their versioned curriculum, course
