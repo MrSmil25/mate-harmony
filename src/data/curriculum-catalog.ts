@@ -132,7 +132,7 @@ export async function loadPrograms(): Promise<CatalogProgram[]> {
     .select("id, code, name, faculty, university, degree, curriculum_year, total_sks")
     .eq("is_active", true)
     .order("name");
-  if (error || !data?.length) return [fallbackProgram];
+  if (error || !data?.length) return offlinePrograms;
 
   return data.map((row) => ({
     id: row.id,
@@ -147,6 +147,9 @@ export async function loadPrograms(): Promise<CatalogProgram[]> {
 }
 
 export async function loadProgramCurriculum(program: CatalogProgram): Promise<ProgramCurriculum> {
+  const offline = offlineCurriculumById.get(program.id);
+  if (offline) return offline;
+
   const { data, error } = await supabase
     .from("curriculum_courses")
     .select("code, name, sks, course_group, category, track, semester, note, course_prerequisites(prerequisite_code)")
