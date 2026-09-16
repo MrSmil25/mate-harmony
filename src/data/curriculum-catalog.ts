@@ -188,7 +188,7 @@ export function sksTotal(codes: string[]) {
 
 /** Programs available for onboarding. */
 export function usePrograms() {
-  const [programs, setPrograms] = useState<CatalogProgram[]>([fallbackProgram]);
+  const [programs, setPrograms] = useState<CatalogProgram[]>(offlinePrograms);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
