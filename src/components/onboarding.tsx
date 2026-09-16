@@ -339,6 +339,64 @@ export function Onboarding({ onComplete }: { onComplete: (setup: StudentSetup) =
               ))}
             </section>
           )}
+
+          {step === 8 && (
+            <section className="space-y-4">
+              <div className="academic-card overflow-hidden">
+                <div className="bg-academic p-6 text-academic-foreground">
+                  <p className="text-xs font-semibold opacity-80">YOUR ACADEMIC OPERATING SYSTEM IS READY</p>
+                  <h2 className="mt-2 text-2xl font-bold">{name.trim() || "Student"} · Semester {semester}</h2>
+                  <p className="mt-1 text-sm opacity-85">{catalog.program.name} · {faculty} · {university} · Angkatan {entryYear}</p>
+                </div>
+                <div className="grid gap-3 p-5 sm:grid-cols-4">
+                  <Stat label="Current semester" value={`Semester ${semester}`} />
+                  <Stat label="Credits completed" value={`${progress.completedSks} / ${catalog.totalSks} SKS`} />
+                  <Stat label="Remaining" value={`${progress.remainingSks} SKS`} />
+                  <Stat label="Degree progress" value={`${progress.percent}%`} />
+                </div>
+                <div className="px-5 pb-5"><Progress value={progress.percent} className="h-2" /></div>
+              </div>
+
+              <div className="academic-card p-5">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><ClipboardList className="size-4 text-academic" />Courses this semester · {sksTotal(activeCodes) + customCourses.reduce((total, course) => total + (Number(course.sks) || 0), 0)} SKS</p>
+                <div className="mt-3 space-y-2">
+                  {activeCodes.map((code) => {
+                    const course = courseByCode.get(code);
+                    const config = configs[code];
+                    if (!course || !config) return null;
+                    return (
+                      <div key={code} className="rounded-xl bg-muted p-3.5">
+                        <p className="text-sm font-bold">{course.name}</p>
+                        <p className="mt-1 text-[11px] text-muted-foreground">Class {config.section} · {course.sks} SKS · {config.lecturer || "Lecturer TBA"} · {config.day} {config.start}–{config.end} · {config.room || "Room TBA"}</p>
+                      </div>
+                    );
+                  })}
+                  {customCourses.filter((course) => course.name.trim()).map((course, index) => (
+                    <div key={`extra-${index}`} className="rounded-xl bg-muted p-3.5">
+                      <p className="text-sm font-bold">{course.name} <span className="text-[10px] font-semibold text-academic">EXTRA</span></p>
+                      <p className="mt-1 text-[11px] text-muted-foreground">{course.faculty || "Outside curriculum"} · {course.sks} SKS · {course.day} {course.start}–{course.end} · {course.countsTowardGraduation ? "Counts toward graduation" : "Not counted"}</p>
+                    </div>
+                  ))}
+                  {!activeCodes.length && !customCourses.length && <p className="text-sm text-muted-foreground">No active courses picked yet.</p>}
+                </div>
+              </div>
+
+              <div className="academic-card p-5">
+                <p className="flex items-center gap-2 text-xs font-semibold uppercase text-muted-foreground"><Clock3 className="size-4 text-academic" />Today · {todayName}</p>
+                <div className="mt-3 space-y-2">
+                  {todaySchedule.length ? todaySchedule.map((item) => (
+                    <div key={item.key} className="flex items-center gap-3 rounded-xl bg-muted p-3.5">
+                      <span className="font-display text-sm font-bold text-academic">{item.start}</span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold">{item.title}</span>
+                        <span className="block text-[11px] text-muted-foreground">{item.start} – {item.end} · {item.room || "Room TBA"}</span>
+                      </span>
+                    </div>
+                  )) : <p className="text-sm text-muted-foreground">Nothing scheduled today — a good day to get ahead.</p>}
+                </div>
+              </div>
+            </section>
+          )}
         </div>
       </main>
 
